@@ -6,9 +6,9 @@ import com.otaliastudios.transcoder.internal.pipeline.State
 import com.otaliastudios.transcoder.internal.utils.Logger
 
 internal class Segment(
-        val type: TrackType,
-        val index: Int,
-        private val pipeline: Pipeline,
+    val type: TrackType,
+    val index: Int,
+    private val pipeline: Pipeline,
 ) {
 
     private val log = Logger("Segment($type,$index)")
@@ -24,7 +24,16 @@ internal class Segment(
         return state == null || state !is State.Eos
     }
 
+    fun needsSleep(): Boolean {
+        when (val s = state ?: return false) {
+            is State.Ok -> return false
+            is State.Retry -> return false
+            is State.Wait -> return s.withSleep
+        }
+    }
+
     fun release() {
         pipeline.release()
     }
+
 }

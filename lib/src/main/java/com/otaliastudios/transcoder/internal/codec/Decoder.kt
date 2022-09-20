@@ -67,6 +67,7 @@ internal class Decoder(
             dequeuedInputs++
             buffers.getInputBuffer(id) to id
         } else {
+            codec.flush()
             log.i("buffer() failed. dequeuedInputs=$dequeuedInputs dequeuedOutputs=$dequeuedOutputs")
             null
         }
@@ -92,7 +93,7 @@ internal class Decoder(
         return when (result) {
             INFO_TRY_AGAIN_LATER -> {
                 log.i("drain(): got INFO_TRY_AGAIN_LATER, waiting.")
-                State.Wait
+                State.Wait(true)
             }
             INFO_OUTPUT_FORMAT_CHANGED -> {
                 log.i("drain(): got INFO_OUTPUT_FORMAT_CHANGED, handling format and retrying. format=${codec.outputFormat}")
@@ -117,7 +118,7 @@ internal class Decoder(
                     if (isEos) State.Eos(data) else State.Ok(data)
                 } else {
                     codec.releaseOutputBuffer(result, false)
-                    State.Wait
+                    State.Wait(false)
                 }.also {
                     log.v("drain(): returning $it")
                 }
